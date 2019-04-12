@@ -14,3 +14,6 @@ cmsc142 project
 ## Milestone 3 (Week 3):
 1. May be coded using any programming language.
 2. Must have a user interface
+
+## G-collab meetings:
+https://colab.research.google.com/drive/163KJ_dUZg232vCGOOV9yc2yfWQFGzNGP?fbclid=IwAR3f3icadUCyAreoYgxxC9dxk5-abd007Y16ugWuXJkcAmEL3ri4QaBA8_c
