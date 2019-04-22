@@ -117,7 +117,7 @@ void print_puzzle_node(PUZZLE * node){
 	}
 }
 
-void populate(PUZZLE *parent, PUZZLE ***btm, int * nsiblings, int * curr_stack, int * curr_node){
+void populate(PUZZLE *parent, PUZZLE ***btm, int * nsiblings, int curr_stack){
 	int i,j;
 	int n = parent->N;
 	int firstSpacei = -1;
@@ -154,14 +154,14 @@ void populate(PUZZLE *parent, PUZZLE ***btm, int * nsiblings, int * curr_stack, 
 		}
 
 		// connect new child to btm
-		btm[*curr_stack][nsiblings[(*curr_stack)]] = new_puzzle_ptr;
+		btm[curr_stack][nsiblings[curr_stack]] = new_puzzle_ptr;
 		// update stack pointers
-		nsiblings[(*curr_stack)]++;
+		nsiblings[curr_stack]++;
 		// reset first free coordinates
 		firstSpacei = -1;
 		checkif_hasSpace(parent);
+		checkif_hasSpace(new_puzzle_ptr);
 	}
-	(*curr_stack)++;
 }
 
 void initialize_nsiblings(int ** nsiblings, int n){
@@ -174,15 +174,14 @@ void initialize_nsiblings(int ** nsiblings, int n){
 	}
 }
 
-void print_btm(PUZZLE * init_config, PUZZLE *** btm, int * nsiblings){
-	int n = init_config->N;
+void print_btm(int n, PUZZLE *** btm, int * nsiblings, int curr_node, int curr_stack){
 	int layer, i, j, sib;
 	int cell;
 
 	printf("\nBacktracking Matrix\n");
-	
+
 	// for each layer
-	for(layer=0;layer<n;layer++){
+	for(layer=0;layer<curr_stack+1;layer++){
 		// line break
 		for(i=0;i<n*(n+1)*2;i++){
 			printf("-");
@@ -192,9 +191,10 @@ void print_btm(PUZZLE * init_config, PUZZLE *** btm, int * nsiblings){
 		// for each row of whole layer
 		for(i=0;i<n;i++){
 			// for each cases in that layer
-			for(sib=0;sib<nsiblings[layer];sib++){
+			for(sib=0;sib<nsiblings[layer]; sib++){
 				// for each cell across all cases
 				for(j=0;j<n;j++){
+					// printf("btm[%d][%d]->board[%d][%d]\n", layer, sib, i, j);
 					cell = btm[layer][sib]->board[i][j];
 					switch(cell){
 						case EMPTY:
@@ -249,8 +249,39 @@ int main(){
 	initialize_puzzle_node(&init_config, n);
 	initialize_nsiblings(&nsiblings, n);
 	initialize_btm(&btm,n);
-	populate(init_config,btm,nsiblings,&curr_stack,&curr_node);
-	print_btm(init_config, btm, nsiblings);
+	populate(init_config,btm,nsiblings,curr_stack);
+
+	while(nsiblings[start] > 0){
+		curr_node = nsiblings[curr_stack]-1;
+		print_btm(n, btm, nsiblings, nsiblings[curr_stack]-1, curr_stack);
+		// pushing
+		if (btm[curr_stack][curr_node]->hasSpace){
+			populate(btm[curr_stack][curr_node], btm, nsiblings, curr_stack+1);
+			curr_stack++;
+		}
+		// popping
+		else{
+			//solution found! pop up
+			if(curr_stack == n-1){ 
+				printf("SOLUTION FOUND\n");
+				print_puzzle_node(btm[curr_stack][curr_node]);
+				// pop up
+				nsiblings[curr_stack]--;
+				curr_stack--;
+			}
+			//may sibling, pop side
+			else if(nsiblings[curr_stack] > 1) {
+				nsiblings[curr_stack]--;
+			}
+			// no more sibling aka dead end, pop up
+			else if(nsiblings[curr_stack] == 1){
+				nsiblings[curr_stack]--;
+				curr_stack--;
+			}
+		}
+	}
+
+
 
 	return 0;
 }
