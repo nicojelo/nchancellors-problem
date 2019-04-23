@@ -1,6 +1,6 @@
 // CONSTANTS
-#define EMPTY 0			//_
-#define CHANCELLOR 1	//c
+#define EMPTY '0'			//_
+#define CHANCELLOR '1'	//c
 #define TAKEN 2			//-
 #define CHILD 3			//o
 #define INCEST 4		//x
@@ -10,6 +10,7 @@
 // LIBRARIES 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // USER-DEFINED STRUCTURES
 typedef struct puzzle_node{
@@ -236,24 +237,48 @@ void print_nsiblings(int * nsiblings, int n){
 	printf(" --- \n");
 }
 
-int main(){
-	// VARIABLES 
+void free_puzzle_node(PUZZLE * puzzle_node){
+	int i,j;
+	int n = puzzle_node->N;
+
+	for(i=0;i<n;i++){
+		free(puzzle_node->board[i]);
+	}
+	free(puzzle_node->board);
+}
+
+void free_btm(PUZZLE *** btm, int n){
+	int i,j,k;
+
+	for(i=0; i<n; i++){
+		for(j=0; j<n; j++){
+			free(btm[i][j]);
+		}
+		free(btm[i]);
+	}
+	free(btm);
+}
+
+void chancy(PUZZLE * init_config){
+	
+
 	int start = 0;
 	int curr_stack = 0;
 	int curr_node = 0;
-	int n = 4;
-	PUZZLE * init_config;
+	int n = init_config->N;
 	PUZZLE *** btm; //backtracking matrix (2d array of pointers)4
 	int * nsiblings;
 
-	initialize_puzzle_node(&init_config, n);
 	initialize_nsiblings(&nsiblings, n);
 	initialize_btm(&btm,n);
 	populate(init_config,btm,nsiblings,curr_stack);
+	print_puzzle_node(init_config);
 
+	print_btm(n, btm, nsiblings, nsiblings[curr_stack]-1, curr_stack);
 	while(nsiblings[start] > 0){
+		print_nsiblings(nsiblings, n);
 		curr_node = nsiblings[curr_stack]-1;
-		print_btm(n, btm, nsiblings, nsiblings[curr_stack]-1, curr_stack);
+		// print_btm(n, btm, nsiblings, nsiblings[curr_stack]-1, curr_stack);
 		// pushing
 		if (btm[curr_stack][curr_node]->hasSpace){
 			populate(btm[curr_stack][curr_node], btm, nsiblings, curr_stack+1);
@@ -265,23 +290,63 @@ int main(){
 			if(curr_stack == n-1){ 
 				printf("SOLUTION FOUND\n");
 				print_puzzle_node(btm[curr_stack][curr_node]);
+				free_puzzle_node(btm[curr_stack][curr_node]);
 				// pop up
 				nsiblings[curr_stack]--;
 				curr_stack--;
 			}
 			//may sibling, pop side
 			else if(nsiblings[curr_stack] > 1) {
+				free_puzzle_node(btm[curr_stack][curr_node]);
 				nsiblings[curr_stack]--;
 			}
 			// no more sibling aka dead end, pop up
 			else if(nsiblings[curr_stack] == 1){
+				free_puzzle_node(btm[curr_stack][curr_node]);
 				nsiblings[curr_stack]--;
 				curr_stack--;
 			}
 		}
 	}
 
+	free(nsiblings);
+	free_btm(btm, n);
 
 
+
+
+
+
+}
+int main(){
+	FILE *fp;
+	int N,i,j,k,n;
+	char *row;
+	PUZZLE * init_config;
+
+	fp = fopen("input.txt","r"); //opens the file
+	fscanf(fp,"%d",&N);
+	// printf("%d\n",N );
+	for(i=0;i<N;i++){
+		fscanf(fp,"%d",&n);
+		initialize_puzzle_node(&init_config, n);
+		fgetc(fp);
+		for(j=0;j<n;j++){
+			fgets(row,n+2,fp);
+			row[strlen(row)-1] = '\0';
+			for(k=0;k<n;k++){
+				if(init_config->board[j][k] == EMPTY){
+					init_config->board[j][k] = row[k];
+					if(row[k] == CHANCELLOR){
+						fill_taken(init_config, j, k);
+					}
+				}
+			}
+		}
+
+		chancy(init_config);
+		printf("FINISHED PUZZLE %d-------------------------------------------------------\n", i);
+		// break;
+	}
 	return 0;
 }
