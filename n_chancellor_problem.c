@@ -259,7 +259,33 @@ void free_btm(PUZZLE *** btm, int n){
 	free(btm);
 }
 
-void chancy(PUZZLE * init_config){
+void output_solution(PUZZLE * solution, FILE * temp_fw){
+	int i,j;
+	int n = solution->N;
+	int cell;
+
+	for(i=0;i<n;i++){
+		for(j=0;j<n;j++){
+			cell = solution->board[i][j];
+			if(cell == CHANCELLOR){
+				fprintf(temp_fw, "%c", '1');
+			}
+			else{
+				fprintf(temp_fw, "%c", '0');
+			}
+		}
+		fputc('\n',temp_fw);
+	}
+}
+
+void output_result(int num_solutions, FILE * output_fp, FILE * temp_fr){
+	char ch;
+	fprintf(output_fp, "%d\n", num_solutions);
+
+}
+
+
+void chancy(PUZZLE * init_config, FILE * output_fp, FILE * temp_fr, FILE * temp_fw){
 	
 
 	int start = 0;
@@ -268,6 +294,7 @@ void chancy(PUZZLE * init_config){
 	int n = init_config->N;
 	PUZZLE *** btm; //backtracking matrix (2d array of pointers)4
 	int * nsiblings;
+	int num_solutions = 0;
 
 	initialize_nsiblings(&nsiblings, n);
 	initialize_btm(&btm,n);
@@ -276,7 +303,6 @@ void chancy(PUZZLE * init_config){
 
 	print_btm(n, btm, nsiblings, nsiblings[curr_stack]-1, curr_stack);
 	while(nsiblings[start] > 0){
-		print_nsiblings(nsiblings, n);
 		curr_node = nsiblings[curr_stack]-1;
 		// print_btm(n, btm, nsiblings, nsiblings[curr_stack]-1, curr_stack);
 		// pushing
@@ -288,9 +314,9 @@ void chancy(PUZZLE * init_config){
 		else{
 			//solution found! pop up
 			if(curr_stack == n-1){ 
-				printf("SOLUTION FOUND\n");
-				print_puzzle_node(btm[curr_stack][curr_node]);
+				output_solution(btm[curr_stack][curr_node], temp_fw);
 				free_puzzle_node(btm[curr_stack][curr_node]);
+				num_solutions++;
 				// pop up
 				nsiblings[curr_stack]--;
 				curr_stack--;
@@ -311,28 +337,30 @@ void chancy(PUZZLE * init_config){
 
 	free(nsiblings);
 	free_btm(btm, n);
-
-
-
-
+	output_result(num_solutions, output_fp, temp_fr);
+	fputc('-',temp_fw);
 
 
 }
 int main(){
-	FILE *fp;
+	FILE *input_fp, *output_fp, *temp_fr, *temp_fw;
 	int N,i,j,k,n;
 	char *row;
 	PUZZLE * init_config;
 
-	fp = fopen("input.txt","r"); //opens the file
-	fscanf(fp,"%d",&N);
+	input_fp = fopen("input.txt","r"); //opens the input file
+	output_fp = fopen("output.txt","w"); //opens the output file
+	temp_fw = fopen("temp.txt","w"); //opens the output file
+	temp_fr = fopen("temp.txt","r"); //opens the output file
+
+	fscanf(input_fp,"%d",&N);
 	// printf("%d\n",N );
 	for(i=0;i<N;i++){
-		fscanf(fp,"%d",&n);
+		fscanf(input_fp,"%d",&n);
 		initialize_puzzle_node(&init_config, n);
-		fgetc(fp);
+		fgetc(input_fp);
 		for(j=0;j<n;j++){
-			fgets(row,n+2,fp);
+			fgets(row,n+2,input_fp);
 			row[strlen(row)-1] = '\0';
 			for(k=0;k<n;k++){
 				if(init_config->board[j][k] == EMPTY){
@@ -344,9 +372,13 @@ int main(){
 			}
 		}
 
-		chancy(init_config);
+		chancy(init_config, output_fp, temp_fr, temp_fw);
 		printf("FINISHED PUZZLE %d-------------------------------------------------------\n", i);
 		// break;
 	}
+	fclose(input_fp);
+	fclose(output_fp);
+	fclose(temp_fw);
+	fclose(temp_fr);
 	return 0;
 }
