@@ -294,8 +294,8 @@ void chancy(PUZZLE * init_config){
 		else{
 			//solution found! pop up
 			if(btm[curr_stack][curr_node]->numCs == n){ 
-				printf("SOLUTION FOUND\n");
-				print_puzzle_node(btm[curr_stack][curr_node]);
+				// printf("SOLUTION FOUND\n");
+				// print_puzzle_node(btm[curr_stack][curr_node]);
 				free_puzzle_node(btm[curr_stack][curr_node]);
 				// pop up
 				nsiblings[curr_stack]--;
@@ -321,13 +321,67 @@ void chancy(PUZZLE * init_config){
 	free(nsiblings);
 	// free_btm(btm, n);
 	printf("Number of solutions: %d\n", num_solutions);
-
-
-
-
-
-
 }
+
+int is_valid_config(PUZZLE * puzzle_node){
+	int n = puzzle_node->N;
+	int i,j, k,l, cell;
+
+	for(i=0;i<n;i++){
+		for(j=0;j<n;j++){
+			cell = puzzle_node->board[i][j];
+			if(cell == CHANCELLOR){
+				// horizontal dashes
+				for(k=0;k<n;k++){
+					if(k!=j && puzzle_node->board[i][k] == CHANCELLOR)
+						return FALSE;
+				}
+				// vertical dashes
+				for(k=0;k<n;k++){
+					if(i!=k && puzzle_node->board[k][j] == CHANCELLOR)
+						return FALSE;
+				}
+
+				// knight movement
+				if(i-1>=0 && j-2>=0 && puzzle_node->board[i-1][j-2] == CHANCELLOR)
+					return FALSE;
+				if(i-2>=0 && j-1>=0 && puzzle_node->board[i-2][j-1] == CHANCELLOR)
+					return FALSE;
+				if(i+1<n && j+2<n && puzzle_node->board[i+1][j+2] == CHANCELLOR)
+					return FALSE;
+				if(i+2<n && j+1<n && puzzle_node->board[i+2][j+1] == CHANCELLOR)
+					return FALSE;
+				if(i-1>=0 && j+2<n && puzzle_node->board[i-1][j+2] == CHANCELLOR)
+					return FALSE;
+				if(i-2>=0 && j+1<n && puzzle_node->board[i-2][j+1] == CHANCELLOR)
+					return FALSE;
+				if(i+1<n && j-2>=0 && puzzle_node->board[i+1][j-2] == CHANCELLOR)
+					return FALSE;
+				if(i+2<n && j-1>=0 && puzzle_node->board[i+2][j-1] == CHANCELLOR)
+					return FALSE;
+			}
+		}
+	}
+
+	return TRUE;
+
+	
+}
+
+void fill_taken_board(PUZZLE * puzzle_node){
+	int i,j;
+	int n = puzzle_node->N;
+
+	for(i=0;i<n;i++){
+		for(j=0;j<n;j++){
+			if(puzzle_node->board[i][j] == CHANCELLOR){
+				fill_taken(puzzle_node, i, j);
+				puzzle_node->numCs++;	
+			}
+		}
+	}
+}
+
 int main(){
 	FILE *fp;
 	int N,i,j,k,n;
@@ -346,18 +400,17 @@ int main(){
 			fgets(row,n+2,fp);
 			row[strlen(row)-1] = '\0';
 			for(k=0;k<n;k++){
-				if(init_config->board[j][k] == EMPTY){
-					init_config->board[j][k] = row[k];
-					if(row[k] == CHANCELLOR){
-						init_config->numCs++;
-						fill_taken(init_config, j, k);
-					}
-				}
+				init_config->board[j][k] = row[k];
 			}
 		}
 
-		chancy(init_config);
-		// break;
+		if(is_valid_config(init_config)){
+			fill_taken_board(init_config);
+			chancy(init_config);
+		}
+		else{
+			printf("Initial board is invalid :<\n");
+		}
 	}
 	return 0;
 }
