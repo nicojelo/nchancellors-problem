@@ -252,31 +252,33 @@ void free_btm(PUZZLE *** btm, int n){
 
 	for(i=0; i<n; i++){
 		for(j=0; j<n; j++){
-			free(btm[i][j]);
+			if(btm[i][j] != NULL)
+				free(btm[i][j]);
 		}
-		free(btm[i]);
+		if(btm[i] != NULL)
+			free(btm[i]);
 	}
-	free(btm);
+	if(btm != NULL)
+		free(btm);
 }
 
 void chancy(PUZZLE * init_config){
-	
-
 	int start = 0;
 	int curr_stack = 0;
 	int curr_node = 0;
 	int n = init_config->N;
 	PUZZLE *** btm; //backtracking matrix (2d array of pointers)4
 	int * nsiblings;
+	int num_solutions = 0;
 
 	initialize_nsiblings(&nsiblings, n);
 	initialize_btm(&btm,n);
 	populate(init_config,btm,nsiblings,curr_stack);
-	print_puzzle_node(init_config);
 
-	print_btm(n, btm, nsiblings, nsiblings[curr_stack]-1, curr_stack);
+	// print_puzzle_node(init_config);
+	// print_btm(n, btm, nsiblings, nsiblings[curr_stack]-1, curr_stack);
+
 	while(nsiblings[start] > 0){
-		print_nsiblings(nsiblings, n);
 		curr_node = nsiblings[curr_stack]-1;
 		// print_btm(n, btm, nsiblings, nsiblings[curr_stack]-1, curr_stack);
 		// pushing
@@ -288,12 +290,13 @@ void chancy(PUZZLE * init_config){
 		else{
 			//solution found! pop up
 			if(curr_stack == n-1){ 
-				printf("SOLUTION FOUND\n");
-				print_puzzle_node(btm[curr_stack][curr_node]);
+				// printf("SOLUTION FOUND\n");
+				// print_puzzle_node(btm[curr_stack][curr_node]);
 				free_puzzle_node(btm[curr_stack][curr_node]);
 				// pop up
 				nsiblings[curr_stack]--;
 				curr_stack--;
+				num_solutions++;
 			}
 			//may sibling, pop side
 			else if(nsiblings[curr_stack] > 1) {
@@ -310,7 +313,8 @@ void chancy(PUZZLE * init_config){
 	}
 
 	free(nsiblings);
-	free_btm(btm, n);
+	// free_btm(btm, n);
+	printf("Number of solutions: %d\n", num_solutions);
 
 
 
@@ -326,7 +330,6 @@ int main(){
 
 	fp = fopen("input.txt","r"); //opens the file
 	fscanf(fp,"%d",&N);
-	// printf("%d\n",N );
 	for(i=0;i<N;i++){
 		fscanf(fp,"%d",&n);
 		initialize_puzzle_node(&init_config, n);
@@ -345,7 +348,6 @@ int main(){
 		}
 
 		chancy(init_config);
-		printf("FINISHED PUZZLE %d-------------------------------------------------------\n", i);
 		// break;
 	}
 	return 0;
