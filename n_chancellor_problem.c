@@ -17,6 +17,7 @@ typedef struct puzzle_node{
     int N;
     int hasSpace;
     int ** board; //2d array
+    int numCs;
 }PUZZLE;
 
 void initialize_btm(PUZZLE **** btm, int n){
@@ -36,6 +37,7 @@ void initialize_puzzle_node(PUZZLE ** init_config, int n){
 	(*init_config) = (PUZZLE*) malloc(sizeof(PUZZLE));
 	(*init_config)->N = n;
 	(*init_config)->hasSpace = TRUE;
+	(*init_config)->numCs = 0;
 		// initialize config
 	(*init_config)->board = (int **) malloc(sizeof(int *)*n);
 	for(i=0;i<n;i++){
@@ -145,6 +147,8 @@ void populate(PUZZLE *parent, PUZZLE ***btm, int * nsiblings, int curr_stack){
 		// update parent and child boards
 		new_puzzle_ptr->board[firstSpacei][firstSpacej] = CHANCELLOR;
 		parent->board[firstSpacei][firstSpacej] = CHILD;
+		// count number of chancellors in new puzzle node
+		new_puzzle_ptr->numCs = parent->numCs+1;
 		fill_taken(new_puzzle_ptr, firstSpacei, firstSpacej);
 		// update parent according to incest rule
 		for(i=0;i<n;i++){
@@ -289,9 +293,9 @@ void chancy(PUZZLE * init_config){
 		// popping
 		else{
 			//solution found! pop up
-			if(curr_stack == n-1){ 
-				// printf("SOLUTION FOUND\n");
-				// print_puzzle_node(btm[curr_stack][curr_node]);
+			if(btm[curr_stack][curr_node]->numCs == n){ 
+				printf("SOLUTION FOUND\n");
+				print_puzzle_node(btm[curr_stack][curr_node]);
 				free_puzzle_node(btm[curr_stack][curr_node]);
 				// pop up
 				nsiblings[curr_stack]--;
@@ -305,6 +309,8 @@ void chancy(PUZZLE * init_config){
 			}
 			// no more sibling aka dead end, pop up
 			else if(nsiblings[curr_stack] == 1){
+				// printf("DEADEND BOI\n");
+				// print_puzzle_node(btm[curr_stack][curr_node]);
 				free_puzzle_node(btm[curr_stack][curr_node]);
 				nsiblings[curr_stack]--;
 				curr_stack--;
@@ -330,10 +336,12 @@ int main(){
 
 	fp = fopen("input.txt","r"); //opens the file
 	fscanf(fp,"%d",&N);
+	// iterate over all init_configs
 	for(i=0;i<N;i++){
 		fscanf(fp,"%d",&n);
 		initialize_puzzle_node(&init_config, n);
 		fgetc(fp);
+		// iterate rows of current init_config
 		for(j=0;j<n;j++){
 			fgets(row,n+2,fp);
 			row[strlen(row)-1] = '\0';
@@ -341,6 +349,7 @@ int main(){
 				if(init_config->board[j][k] == EMPTY){
 					init_config->board[j][k] = row[k];
 					if(row[k] == CHANCELLOR){
+						init_config->numCs++;
 						fill_taken(init_config, j, k);
 					}
 				}
