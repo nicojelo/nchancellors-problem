@@ -246,22 +246,23 @@ void free_puzzle_node(PUZZLE * puzzle_node){
 	int n = puzzle_node->N;
 
 	for(i=0;i<n;i++){
-		free(puzzle_node->board[i]);
+		if(puzzle_node->board[i] != NULL)
+			free(puzzle_node->board[i]);
 	}
-	free(puzzle_node->board);
+	if(puzzle_node->board != NULL)
+		free(puzzle_node->board);
+
+	free(puzzle_node);
 }
 
 void free_btm(PUZZLE *** btm, int n){
 	int i,j,k;
 
-	for(i=0; i<n; i++){
-		for(j=0; j<n; j++){
-			if(btm[i][j] != NULL)
-				free(btm[i][j]);
-		}
+	for(i=0;i<n;i++){
 		if(btm[i] != NULL)
 			free(btm[i]);
 	}
+
 	if(btm != NULL)
 		free(btm);
 }
@@ -319,8 +320,8 @@ void chancy(PUZZLE * init_config){
 	}
 
 	free(nsiblings);
-	// free_btm(btm, n);
 	printf("Number of solutions: %d\n", num_solutions);
+	free_btm(btm, n);
 }
 
 int is_valid_config(PUZZLE * puzzle_node){
@@ -407,6 +408,7 @@ int main(){
 		if(is_valid_config(init_config)){
 			fill_taken_board(init_config);
 			chancy(init_config);
+			free_puzzle_node(init_config);
 		}
 		else{
 			printf("Initial board is invalid :<\n");
