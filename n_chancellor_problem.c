@@ -106,15 +106,15 @@ void print_puzzle_node(PUZZLE * node){
 		for(j=0;j<node->N;j++){
 			cell = node->board[i][j];
 			if(cell == EMPTY)
-				printf("_ ");
+				printf("_");
 			if(cell == CHANCELLOR)
-				printf("C ");
+				printf("C");
 			if(cell == TAKEN)
-				printf("- ");
+				printf("-");
 			if(cell == CHILD)
-				printf("o ");
+				printf("o");
 			if(cell == INCEST)
-				printf("x ");
+				printf("x");
 		}
 		printf("\n");
 	}
@@ -296,7 +296,7 @@ void chancy(PUZZLE * init_config){
 			//solution found! pop up
 			if(btm[curr_stack][curr_node]->numCs == n){ 
 				// printf("SOLUTION FOUND\n");
-				// print_puzzle_node(btm[curr_stack][curr_node]);
+				print_puzzle_node(btm[curr_stack][curr_node]);
 				free_puzzle_node(btm[curr_stack][curr_node]);
 				// pop up
 				nsiblings[curr_stack]--;
@@ -320,7 +320,7 @@ void chancy(PUZZLE * init_config){
 	}
 
 	free(nsiblings);
-	printf("Number of solutions: %d\n", num_solutions);
+	printf("%d\n", num_solutions);
 	free_btm(btm, n);
 }
 
@@ -383,13 +383,13 @@ void fill_taken_board(PUZZLE * puzzle_node){
 	}
 }
 
-int main(){
+int main(int argc, char*argv[]){
 	FILE *fp;
 	int N,i,j,k,n;
 	char *row;
 	PUZZLE * init_config;
 
-	fp = fopen("input.txt","r"); //opens the file
+	fp = fopen(argv[1],"r"); //opens the file
 	fscanf(fp,"%d",&N);
 	// iterate over all init_configs
 	for(i=0;i<N;i++){
