@@ -125,8 +125,9 @@ void populate(PUZZLE *parent, PUZZLE ***btm, int * nsiblings, int curr_stack){
 	int n = parent->N;
 	int firstSpacei = -1;
 	int firstSpacej = -1;
-	PUZZLE * new_puzzle_ptr; // child
+	PUZZLE * new_puzzle_ptr = NULL; // child
 
+	checkif_hasSpace(parent);
 	while (parent->hasSpace){
 		//make_anak
 		initialize_puzzle_node(&new_puzzle_ptr, n); // create node
@@ -413,6 +414,7 @@ int main(int argc, char*argv[]){
 		else{
 			printf("Initial board is invalid :<\n");
 		}
+		printf("next config\n");
 	}
 	return 0;
 }
