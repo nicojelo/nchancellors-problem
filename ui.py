@@ -2,6 +2,9 @@ from tkinter import *
 from tkinter import filedialog as fd
 from ctypes import *
 import subprocess
+from PIL import Image,ImageTk
+
+
 
 def upload():
 	global inputPath
@@ -49,25 +52,25 @@ def showSolution(solutions):
 	solutionWindow = SolutionWindow(root, solutions)
 
 
-# https://pyinmyeye.blogspot.com/2012/08/tkinter-knights-tour-demo.html
 def draw_board(canvas, n, board):  
 	# draw checkerboard
 	for r in range(n-1, -1, -1):
 		for c in range(n):
 			if c&1 ^ r&1:
-				fill = 'tan3'
-				dfill = 'tan4'
+				cellType = yellowCell
+				disabledCellType = greyCell
 			else:
-				fill = 'bisque'
-				dfill= 'bisque3'
+				cellType = brownCell
+				disabledCellType = greyCell
 			coords = (c*30+4, r*30+4, c*30+30, r*30+30)
-			if board[r][c] == 'C':
-				fill = 'black'
-				dfill = 'black'
-				# canvas.create_text(((c*30+4)+(c*30+30))/2, ((r*30+4) + (r*30+30))/2, text="C")
-			canvas.create_rectangle(coords, fill=fill, disabledfill=dfill, 
-				width=2, state='disabled')
+			if board[r][c] == 'C' and c&1 ^ r&1:
+				cellType = chancyYellowCell
+				disabledCellType = chancyYellowCell
+			elif board[r][c] == 'C':
+				cellType = chancyBrownCell
+				disabledCellType = chancyBrownCell
 
+			canvas.create_image(coords[0], coords[1],image=cellType,disabledimage=disabledCellType, anchor=NW, state='normal', tags='c'+str(r)+str(c))
 
 
 
@@ -84,20 +87,20 @@ class Pages:
 
 
 		currentFrame = Frame(solutionWindow)
-		currentFrame.grid(row=0, column=0, sticky='news')
+		currentFrame.grid(row=1, column=1, sticky='news')
 		if self.n == 1:
 			Label(currentFrame,text='NO SOLUTION').pack()
 			self.frames =  [currentFrame]
 		else:
 			board = solutions[self.currentPage*n:self.currentPage*n+n]
+			Button(currentFrame,image=prevImage, text="Previous Page", command=lambda:self.nextPage(-1)).grid(row=1,column=0,sticky='news')
 			# draw board
 			canvas = Canvas(currentFrame, width=n*31, height=n*31)
 			draw_board(canvas, n, board)
-			canvas.pack()
+			canvas.grid(row=1,column=1,sticky='news')
 
-			Label(currentFrame, text="Page {}/{}".format(self.currentPage+1, numOfSolutions)).pack()
-			Button(currentFrame, text="Next Page", command=lambda:self.nextPage(1)).pack()
-			Button(currentFrame, text="Previous Page", command=lambda:self.nextPage(-1)).pack()
+			Button(currentFrame, image=nextImage, text="Next Page", command=lambda:self.nextPage(1)).grid(row=1,column=2,sticky='news')
+			Label(currentFrame, text="Page {}/{}".format(self.currentPage+1, numOfSolutions)).grid(row=2,column=1,sticky='news')
 			self.frames[self.currentPage] =  currentFrame
 
 	def nextPage(self, pageNumber):
@@ -112,15 +115,15 @@ class Pages:
 			self.frames[pageNumber].tkraise()
 		else:
 			nextFrame = Frame(self.solutionWindow)
-			nextFrame.grid(row=0, column=0, sticky='news')
+			nextFrame.grid(row=1, column=1, sticky='news')
 			board = self.solutions[pageNumber*self.n:pageNumber*self.n+self.n]
+			Button(nextFrame,image=prevImage, text="Previous Page", command=lambda:self.nextPage(pageNumber-1)).grid(row=1,column=0,sticky='news')
 			# draw board
 			canvas = Canvas(nextFrame, width=self.n*31, height=self.n*31)
 			draw_board(canvas, self.n, board)
-			canvas.pack()
-			Label(nextFrame, text="Page {}/{}".format(pageNumber+1, self.numOfSolutions)).pack()
-			Button(nextFrame, text="Next Page", command=lambda:self.nextPage(pageNumber+1)).pack()
-			Button(nextFrame, text="Previous Page", command=lambda:self.nextPage(pageNumber-1)).pack()
+			canvas.grid(row=1,column=1,sticky='news')
+			Button(nextFrame,image=nextImage, text="Next Page", command=lambda:self.nextPage(pageNumber+1)).grid(row=1,column=2,sticky='news')
+			Label(nextFrame, text="Page {}/{}".format(pageNumber+1, self.numOfSolutions)).grid(row=2,column=1,sticky='news')
 			self.frames[pageNumber] = nextFrame
 
 class SolutionWindow:
@@ -138,10 +141,10 @@ class SolutionWindow:
 		
 		self.solutionPages[0].frames[0].tkraise()
 		
-		Button(self.rootWindow, text="Next Config", command=self.nextPage).grid(row=1, column=0, sticky='news')
-		Button(self.rootWindow, text="Prev Config", command=self.prevPage).grid(row=2, column=0, sticky='news')
-		self.pageLabel = Label(self.rootWindow, text="Page {}/{}".format(self.currentPage+1, len(self.solutionPages)))
-		self.pageLabel.grid(row=3, column=0, sticky='news')
+		Button(self.rootWindow,image=bnextImage, text="Next Config", command=self.nextPage).grid(row=1, column=2, sticky='news')
+		Button(self.rootWindow,image=bprevImage, text="Prev Config", command=self.prevPage).grid(row=1, column=0, sticky='news')
+		self.pageLabel = Label(self.rootWindow, text="Config {}/{}".format(self.currentPage+1, len(self.solutionPages)))
+		self.pageLabel.grid(row=2, column=1, sticky='news')
 		self.rootWindow.pack()
 
 	def nextPage(self):
@@ -150,7 +153,7 @@ class SolutionWindow:
 		else:
 			self.currentPage +=1
 		self.solutionPages[self.currentPage].frames[0].tkraise()
-		self.pageLabel['text'] = "Page {}/{}".format(self.currentPage+1, len(self.solutionPages))
+		self.pageLabel['text'] = "Config {}/{}".format(self.currentPage+1, len(self.solutionPages))
 
 	def prevPage(self):
 		if self.currentPage < 0:
@@ -158,12 +161,13 @@ class SolutionWindow:
 		else:
 			self.currentPage -=1
 		self.solutionPages[self.currentPage].frames[0].tkraise()
-		self.pageLabel['text'] = "Page {}/{}".format(self.currentPage+1, len(self.solutionPages))
+		self.pageLabel['text'] = "Config {}/{}".format(self.currentPage+1, len(self.solutionPages))
 
 class Playable:
 
 	def __init__(self, root):
 		self.root = root
+		Label(root, text='Enter puzzle size:').pack()
 		self.textBox = Entry(root)
 		self.textBox.pack()
 		self.n = 0
@@ -195,29 +199,39 @@ class Playable:
 		for r in range(self.n-1, -1, -1):
 			for c in range(self.n):
 				if c&1 ^ r&1:
-					fill = 'tan3'
-					dfill = 'tan4'
+					cellType = yellowCell
+					disabledCellType = greyCell
 				else:
-					fill = 'bisque'
-					dfill= 'bisque4'
+					cellType = brownCell
+					disabledCellType = greyCell
 				coords = (c*30+4, r*30+4, c*30+30, r*30+30)
-				if self.board[r][c] == 'C':
-					fill = 'black'
-					dfill = 'black'
-					# canvas.create_text(((c*30+4)+(c*30+30))/2, ((r*30+4) + (r*30+30))/2, text="C")
-				rec = self.boardCanvas.create_rectangle(coords, fill=fill, disabledfill=dfill, 
-					width=2, state='normal', tags='c'+str(r)+str(c))
+				if self.board[r][c] == 'C' and c&1 ^ r&1:
+					cellType = chancyYellowCell
+					disabledCellType = chancyYellowCell
+				elif self.board[r][c] == 'C':
+					cellType = chancyBrownCell
+					disabledCellType = chancyBrownCell
+
+				# rec = self.boardCanvas.create_rectangle(coords, fill=fill, disabledfill=dfill, 
+					#width=2, state='normal', tags='c'+str(r)+str(c))
+				rec = self.boardCanvas.create_image(coords[0], coords[1],image=cellType,disabledimage=disabledCellType, anchor=NW, state='normal', tags='c'+str(r)+str(c))
 
 				self.boardCanvas.tag_bind(rec,'<ButtonPress-1>', self.onClickBox)
 
 	def onClickBox(self, event):
 		if self.boardCanvas.find_withtag(CURRENT):
 			if self.boardCanvas.itemcget(CURRENT, 'state')=="normal":
-				self.boardCanvas.itemconfig(CURRENT, state='disabled')
-				self.boardCanvas.itemconfig(CURRENT, fill='black')
+				
 				base = self.boardCanvas.find_withtag(CURRENT)[0]
 				row = (self.n-1) - ((base-1)//self.n)
 				col =  ((base-1)%self.n)
+				self.boardCanvas.itemconfig(CURRENT, state='disabled')
+				if col&1 ^ row&1:
+					self.boardCanvas.itemconfig(CURRENT, disabledimage=chancyYellowCell)
+					self.boardCanvas.itemconfig(CURRENT, image=chancyYellowCell)
+				else:
+					self.boardCanvas.itemconfig(CURRENT, disabledimage=chancyBrownCell)
+					self.boardCanvas.itemconfig(CURRENT, image=chancyBrownCell)
 				self.board[row] = self.board[row][:(col)] + 'C' + self.board[row][col+1:self.n]
 				self.fillTaken(row,col)
 
@@ -247,13 +261,31 @@ class Playable:
 if __name__ == '__main__':
 	subprocess.call(["gcc", "n_chancellor_problem.c"])
 	root = Tk()
+	# images
+	brownCell = ImageTk.PhotoImage(Image.open("images/brown.jpg").resize((26, 26)))
+	yellowCell = ImageTk.PhotoImage(Image.open("images/yellow.jpg").resize((26, 26)))
+	chancyBrownCell = ImageTk.PhotoImage(Image.open("images/chancybrown.jpg").resize((26, 26)))
+	chancyYellowCell = ImageTk.PhotoImage(Image.open("images/chancyyellow.jpg").resize((26, 26)))
+	greyCell = ImageTk.PhotoImage(Image.open("images/gray.jpg").resize((26, 26)))
+	nextImage = ImageTk.PhotoImage(Image.open("images/next.png").resize((50, 50)))
+	bnextImage = ImageTk.PhotoImage(Image.open("images/bnext.png").resize((50, 50)))
+	prevImage = ImageTk.PhotoImage(Image.open("images/prev.png").resize((50, 50)))
+	bprevImage = ImageTk.PhotoImage(Image.open("images/bprev.png").resize((50, 50)))
+
 	pages = []
 	inputPath = ""
 	solutionWindow = None
-	Button(root, text="Open Input File", command=upload).pack()
-	Button(root, text="Execute", command=execute).pack()
 
 	playableWindow = Playable(root)
+
+	# menu bar
+	menubar = Menu(root)
+	uploadmenu = Menu(menubar,tearoff=0)
+	uploadmenu.add_command(label='Upload File...',command=upload)
+	uploadmenu.add_command(label='Solve', command=execute)
+	menubar.add_cascade(label='File', menu=uploadmenu)
+
+	root.config(menu=menubar)
 
 
 

@@ -128,7 +128,7 @@ void populate(PUZZLE *parent, PUZZLE ***btm, int * nsiblings, int curr_stack){
 	PUZZLE * new_puzzle_ptr = NULL; // child
 
 	checkif_hasSpace(parent);
-	while (parent->hasSpace){
+	while (parent->hasSpace && nsiblings[curr_stack]<n){
 		//make_anak
 		initialize_puzzle_node(&new_puzzle_ptr, n); // create node
 		for(i=0;i<n;i++){
@@ -281,7 +281,10 @@ void chancy(PUZZLE * init_config){
 	initialize_btm(&btm,n);
 	populate(init_config,btm,nsiblings,curr_stack);
 
-	// print_puzzle_node(init_config);
+	if(init_config->numCs == n){
+		print_puzzle_node(init_config);
+		num_solutions++;
+	}
 	// print_btm(n, btm, nsiblings, nsiblings[curr_stack]-1, curr_stack);
 
 	while(nsiblings[start] > 0){
